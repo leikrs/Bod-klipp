@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Klipp Frisør – Bodø</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --ink: #0d0d0d; --white: #f8f6f2; --slate: #1c1c1e; --steel: #2a2a2d;
+      --accent: #4a90b8; --warm: #b8956a; --muted: #777;
+      --border: rgba(248,246,242,0.1); --success: #4caf7d;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--ink); color: var(--white); font-family: 'DM Sans', sans-serif; font-weight: 300; overflow-x: hidden; }
+
+    /* NAV */
+    nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 1.6rem 4rem; transition: background 0.4s, border-color 0.4s; }
+    nav.scrolled { background: rgba(13,13,13,0.97); border-bottom: 1px solid var(--border); backdrop-filter: blur(10px); }
+    .nav-logo { font-family: 'Playfair Display', serif; font-size: 1.4rem; letter-spacing: 0.05em; }
+    .nav-logo span { color: var(--accent); }
+    .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+    .nav-links a { font-size: 0.8rem; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(248,246,242,0.6); text-decoration: none; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--white); }
+    .nav-btn { padding: 0.7rem 1.8rem; background: var(--accent); color: var(--white); font-family: 'DM Sans', sans-serif; font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; text-decoration: none; transition: background 0.2s; }
+    .nav-btn:hover { background: #5ba3cc; }
+
+    /* HERO */
+    .hero { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; overflow: hidden; }
+    .hero-left { display: flex; flex-direction: column; justify-content: center; padding: 10rem 4rem 6rem; }
+    .hero-tag { display: inline-flex; align-items: center; gap: 0.6rem; font-size: 0.72rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--accent); margin-bottom: 2rem; opacity: 0; animation: slideIn 0.8s 0.1s forwards; }
+    .hero-tag::before { content: ''; display: block; width: 30px; height: 1px; background: var(--accent); }
+    .hero-title { font-family: 'Playfair Display', serif; font-size: clamp(3.5rem, 6vw, 6rem); font-weight: 700; line-height: 1.0; letter-spacing: -0.02em; opacity: 0; animation: slideIn 0.8s 0.3s forwards; }
+    .hero-title em { font-weight: 400; font-style: italic; color: var(--warm); }
+    .hero-desc { margin-top: 2rem; font-size: 1rem; line-height: 1.8; color: rgba(248,246,242,0.55); max-width: 420px; opacity: 0; animation: slideIn 0.8s 0.5s forwards; }
+    .hero-actions { margin-top: 3rem; display: flex; gap: 1rem; flex-wrap: wrap; opacity: 0; animation: slideIn 0.8s 0.7s forwards; }
+    .btn-fill { padding: 0.9rem 2.2rem; background: var(--white); color: var(--ink); font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase; text-decoration: none; font-weight: 500; transition: transform 0.2s; }
+    .btn-fill:hover { transform: translateY(-2px); }
+    .btn-ghost { padding: 0.9rem 2.2rem; background: transparent; color: var(--white); font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase; text-decoration: none; border: 1px solid var(--border); transition: border-color 0.2s, transform 0.2s; }
+    .btn-ghost:hover { border-color: rgba(248,246,242,0.4); transform: translateY(-2px); }
+    .hero-badge { margin-top: 4rem; display: flex; align-items: center; gap: 1rem; padding-top: 2rem; border-top: 1px solid var(--border); opacity: 0; animation: slideIn 0.8s 0.9s forwards; }
+    .hero-badge-stars { color: #fbbf24; font-size: 0.85rem; }
+    .hero-badge-text { font-size: 0.82rem; color: rgba(248,246,242,0.5); }
+    .hero-badge-text strong { color: var(--white); font-weight: 400; }
+    .hero-right { position: relative; overflow: hidden; background: var(--slate); }
+    .hero-right::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(74,144,184,0.08) 0%, transparent 50%), radial-gradient(circle at 70% 30%, rgba(184,149,106,0.12) 0%, transparent 50%); }
+    .hero-scissors { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); font-size: 12rem; opacity: 0.04; }
+    .hero-text-art { position: absolute; bottom: 3rem; right: 3rem; font-family: 'Playfair Display', serif; font-style: italic; font-size: 8rem; line-height: 1; color: rgba(248,246,242,0.025); white-space: nowrap; }
+    .hero-info-card { position: absolute; bottom: 3rem; left: 3rem; background: rgba(13,13,13,0.85); backdrop-filter: blur(10px); border: 1px solid var(--border); padding: 1.5rem 2rem; }
+    .hero-info-card p { font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.3rem; }
+    .hero-info-card strong { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 400; }
+    @keyframes slideIn { from { opacity:0; transform: translateX(-20px); } to { opacity:1; transform: translateX(0); } }
+
+    /* SHARED */
+    section { padding: 8rem 0; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 4rem; }
+    .section-overline { font-size: 0.7rem; letter-spacing: 0.35em; text-transform: uppercase; color: var(--accent); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.8rem; }
+    .section-overline::before { content: ''; display: block; width: 24px; height: 1px; background: var(--accent); }
+    .section-heading { font-family: 'Playfair Display', serif; font-size: clamp(2.2rem, 4vw, 3.4rem); font-weight: 700; line-height: 1.15; letter-spacing: -0.02em; }
+    .section-heading em { font-weight: 400; font-style: italic; color: var(--warm); }
+    .fade-in { opacity: 0; transform: translateY(28px); transition: opacity 0.75s ease, transform 0.75s ease; }
+    .fade-in.visible { opacity: 1; transform: translateY(0); }
+    .fade-in.d1 { transition-delay: 0.1s; } .fade-in.d2 { transition-delay: 0.2s; } .fade-in.d3 { transition-delay: 0.3s; }
+
+    /* SERVICES */
+    .services-layout { display: grid; grid-template-columns: 1fr 2fr; gap: 8rem; align-items: start; }
+    .services-intro { position: sticky; top: 8rem; }
+    .services-intro p { margin-top: 1.5rem; font-size: 0.95rem; line-height: 1.85; color: rgba(248,246,242,0.5); }
+    .service-row { display: grid; grid-template-columns: 2fr 1fr auto; align-items: center; padding: 1.8rem 0; border-bottom: 1px solid var(--border); gap: 2rem; cursor: pointer; transition: background 0.2s; }
+    .service-row:first-child { border-top: 1px solid var(--border); }
+    .service-row:hover { background: rgba(248,246,242,0.02); }
+    .service-num { font-size: 0.65rem; letter-spacing: 0.2em; color: var(--muted); margin-bottom: 0.3rem; }
+    .service-name { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 700; }
+    .service-desc { font-size: 0.82rem; color: rgba(248,246,242,0.4); margin-top: 0.2rem; }
+    .service-duration { font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); text-align: right; }
+    .service-price { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--warm); text-align: right; white-space: nowrap; }
+
+    /* BOOKING */
+    .booking { background: var(--slate); }
+    .booking-layout { display: grid; grid-template-columns: 1fr 1.5fr; gap: 8rem; align-items: start; }
+    .booking-info p { margin-top: 1.5rem; font-size: 0.95rem; line-height: 1.85; color: rgba(248,246,242,0.5); }
+    .booking-info ul { margin-top: 2rem; list-style: none; display: flex; flex-direction: column; gap: 0.9rem; }
+    .booking-info li { display: flex; gap: 0.8rem; font-size: 0.88rem; color: rgba(248,246,242,0.6); align-items: flex-start; }
+    .booking-info li::before { content: '✓'; color: var(--accent); font-weight: 500; flex-shrink: 0; margin-top: 0.05rem; }
+
+    /* Steps */
+    .booking-steps { display: flex; margin-bottom: 2rem; border-bottom: 1px solid var(--border); }
+    .step-ind { flex: 1; text-align: center; padding: 0.8rem 0.4rem; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 0.3s, border-color 0.3s; }
+    .step-ind.active { color: var(--accent); border-color: var(--accent); }
+    .step-ind.done { color: var(--success); border-color: var(--success); }
+
+    /* Panels */
+    .booking-panel { display: none; }
+    .booking-panel.active { display: block; animation: panelIn 0.35s ease; }
+    @keyframes panelIn { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+    /* Service options */
+    .service-option { display: flex; justify-content: space-between; align-items: center; padding: 1.1rem 1.4rem; border: 1px solid var(--border); margin-bottom: 0.5rem; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+    .service-option:hover { border-color: rgba(74,144,184,0.35); background: rgba(74,144,184,0.04); }
+    .service-option.selected { border-color: var(--accent); background: rgba(74,144,184,0.09); }
+    .service-option-name { font-family: 'Playfair Display', serif; font-size: 1.05rem; }
+    .service-option-sub { font-size: 0.75rem; color: var(--muted); margin-top: 0.15rem; }
+    .service-option-price { font-family: 'Playfair Display', serif; font-size: 1.05rem; color: var(--warm); white-space: nowrap; margin-left: 1rem; }
+
+    /* Date */
+    input[type="date"] { width: 100%; padding: 1rem 1.4rem; background: var(--steel); border: 1px solid var(--border); color: var(--white); font-family: 'DM Sans', sans-serif; font-size: 1rem; outline: none; transition: border-color 0.2s; }
+    input[type="date"]:focus { border-color: var(--accent); }
+    input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.5; cursor: pointer; }
+    .date-hint { font-size: 0.78rem; color: var(--muted); margin-top: 0.7rem; min-height: 1.2rem; }
+
+    /* Timeslots */
+    .timeslots-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin: 1.2rem 0 0.5rem; }
+    .timeslot { padding: 0.65rem 0.3rem; text-align: center; border: 1px solid var(--border); font-size: 0.85rem; cursor: pointer; transition: border-color 0.2s, background 0.2s, color 0.2s; }
+    .timeslot:hover:not(.taken) { border-color: rgba(74,144,184,0.4); }
+    .timeslot.selected { border-color: var(--accent); background: rgba(74,144,184,0.12); color: var(--accent); }
+    .timeslot.taken { opacity: 0.25; cursor: not-allowed; pointer-events: none; text-decoration: line-through; }
+
+    /* Form fields */
+    .form-group { margin-bottom: 1.1rem; }
+    .form-group label { display: block; font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; }
+    .form-group input, .form-group textarea { width: 100%; padding: 0.9rem 1.3rem; background: var(--steel); border: 1px solid var(--border); color: var(--white); font-family: 'DM Sans', sans-serif; font-size: 0.95rem; outline: none; transition: border-color 0.2s; resize: none; }
+    .form-group input:focus, .form-group textarea:focus { border-color: var(--accent); }
+    .form-group input::placeholder, .form-group textarea::placeholder { color: var(--muted); }
+
+    /* Summary */
+    .booking-summary { background: rgba(74,144,184,0.08); border-left: 3px solid var(--accent); padding: 1.2rem 1.5rem; margin-bottom: 1.4rem; }
+    .booking-summary p { font-size: 0.85rem; color: rgba(248,246,242,0.75); line-height: 1.6; }
+    .booking-summary p strong { color: var(--white); }
+
+    /* Nav btns */
+    .booking-nav { display: flex; gap: 1rem; margin-top: 1.5rem; }
+    .btn-next { flex: 1; padding: 1rem; background: var(--accent); color: var(--white); border: none; font-family: 'DM Sans', sans-serif; font-size: 0.82rem; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 500; cursor: pointer; transition: background 0.2s, opacity 0.2s; }
+    .btn-next:hover:not(:disabled) { background: #5ba3cc; }
+    .btn-next:disabled { opacity: 0.35; cursor: not-allowed; }
+    .btn-back { padding: 1rem 1.5rem; background: transparent; color: var(--white); border: 1px solid var(--border); font-family: 'DM Sans', sans-serif; font-size: 0.82rem; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; transition: border-color 0.2s; }
+    .btn-back:hover { border-color: rgba(248,246,242,0.35); }
+
+    /* Success */
+    .booking-success { display: none; text-align: center; padding: 2.5rem 1rem; }
+    .booking-success.visible { display: block; animation: panelIn 0.4s ease; }
+    .success-icon { font-size: 2.5rem; margin-bottom: 1.2rem; }
+    .booking-success h3 { font-family: 'Playfair Display', serif; font-size: 2rem; margin-bottom: 0.8rem; }
+    .booking-success > p { color: rgba(248,246,242,0.6); font-size: 0.93rem; line-height: 1.7; }
+    .success-details { background: var(--steel); padding: 1.4rem 1.5rem; margin: 1.5rem 0; text-align: left; border-left: 3px solid var(--success); }
+    .success-details p { font-size: 0.85rem; color: rgba(248,246,242,0.75); line-height: 1.8; }
+    .success-details p strong { color: var(--white); }
+
+    /* Error */
+    .booking-error { display: none; background: rgba(220,60,60,0.1); border: 1px solid rgba(220,60,60,0.3); padding: 0.9rem 1.3rem; margin-top: 1rem; font-size: 0.85rem; color: #f87171; }
+    .booking-error.visible { display: block; }
+
+    /* ABOUT */
+    .about-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 8rem; align-items: center; }
+    .about-text p { font-size: 0.97rem; line-height: 1.9; color: rgba(248,246,242,0.6); }
+    .about-text p + p { margin-top: 1.2rem; }
+    .highlight { font-family: 'Playfair Display', serif; font-style: italic; font-size: 1.35rem; color: var(--white); opacity: 0.85; line-height: 1.6; margin-top: 2rem; border-left: 2px solid var(--accent); padding-left: 1.5rem; }
+    .about-visual-wrap { position: relative; }
+    .about-big-num { font-family: 'Playfair Display', serif; font-size: 14rem; font-weight: 700; line-height: 1; color: rgba(248,246,242,0.03); position: absolute; top: -2rem; right: -2rem; pointer-events: none; }
+    .about-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; position: relative; z-index: 1; }
+    .about-stat { background: var(--steel); padding: 2rem; border-left: 2px solid var(--accent); }
+    .about-stat-val { font-family: 'Playfair Display', serif; font-size: 2.8rem; color: var(--white); line-height: 1; }
+    .about-stat-label { font-size: 0.72rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-top: 0.5rem; }
+
+    /* REVIEWS */
+    .reviews { background: var(--slate); }
+    .reviews-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 4rem; }
+    .score-num { font-family: 'Playfair Display', serif; font-size: 5rem; line-height: 1; }
+    .score-stars { color: #fbbf24; font-size: 1rem; letter-spacing: 0.15em; }
+    .score-sub { font-size: 0.75rem; color: var(--muted); margin-top: 0.3rem; }
+    .reviews-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); }
+    .review-item { background: var(--slate); padding: 2.5rem; }
+    .review-item-stars { color: #fbbf24; font-size: 0.7rem; letter-spacing: 0.3em; margin-bottom: 1.5rem; }
+    .review-item-text { font-family: 'Playfair Display', serif; font-style: italic; font-size: 1.05rem; line-height: 1.7; color: rgba(248,246,242,0.8); margin-bottom: 1.5rem; }
+    .review-item-author { font-size: 0.72rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); }
+
+    /* CONTACT */
+    .contact-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 8rem; align-items: start; }
+    .contact-item { padding: 2rem 0; border-bottom: 1px solid var(--border); display: flex; gap: 1.5rem; }
+    .contact-item:first-of-type { border-top: 1px solid var(--border); }
+    .contact-icon { font-size: 1.2rem; opacity: 0.6; margin-top: 0.1rem; }
+    .contact-label { font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.4rem; }
+    .contact-val { font-family: 'Playfair Display', serif; font-size: 1.1rem; line-height: 1.5; }
+    .contact-val a { color: inherit; text-decoration: none; }
+    .contact-val a:hover { color: var(--accent); }
+    .hours-grid { display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.5rem; }
+    .hours-row { display: flex; justify-content: space-between; font-size: 0.85rem; color: rgba(248,246,242,0.7); }
+    .hours-row span:last-child { color: var(--white); }
+    .map-box { aspect-ratio: 1; background: var(--steel); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 1rem; color: var(--muted); font-size: 0.82rem; }
+    .map-box span { font-size: 2rem; }
+
+    footer { background: #050505; padding: 2rem 0; text-align: center; font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--white); }
+
+    @media (max-width: 900px) {
+      nav { padding: 1.2rem 1.5rem; } .nav-links { display: none; }
+      .container { padding: 0 1.5rem; }
+      .hero { grid-template-columns: 1fr; } .hero-left { padding: 8rem 1.5rem 4rem; } .hero-right { display: none; }
+      .services-layout, .booking-layout, .about-inner, .contact-inner { grid-template-columns: 1fr; gap: 3rem; }
+      .services-intro { position: static; }
+      .service-row { grid-template-columns: 1fr 1fr; } .service-duration { display: none; }
+      .reviews-header { flex-direction: column; gap: 2rem; } .reviews-grid { grid-template-columns: 1fr; }
+      .timeslots-grid { grid-template-columns: repeat(3,1fr); }
+      .map-box { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<nav id="nav">
+  <div class="nav-logo">Klipp<span>.</span></div>
+  <ul class="nav-links">
+    <li><a href="#tjenester">Tjenester</a></li>
+    <li><a href="#bestill">Bestill time</a></li>
+    <li><a href="#om-oss">Om oss</a></li>
+    <li><a href="#kontakt">Kontakt</a></li>
+  </ul>
+  <a href="#bestill" class="nav-btn">Book time</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-left">
+    <p class="hero-tag">Bodø sentrum</p>
+    <h1 class="hero-title">Bodøs<br><em>favoritt</em><br>frisør</h1>
+    <p class="hero-desc">Profesjonell klipping for alle – rask service, høy kvalitet og priser som passer alle lommebøker. Sjøgata 48, midt i hjertet av Bodø.</p>
+    <div class="hero-actions">
+      <a href="#bestill" class="btn-fill">Bestill time</a>
+      <a href="#tjenester" class="btn-ghost">Se prisliste</a>
+    </div>
+    <div class="hero-badge">
+      <span class="hero-badge-stars">★★★★★</span>
+      <p class="hero-badge-text"><strong>4.8 av 5</strong> — 187 Google-anmeldelser</p>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="hero-scissors">✂</div>
+    <div class="hero-text-art">Klipp.</div>
+    <div class="hero-info-card"><p>Adresse</p><strong>Sjøgata 48, Bodø</strong></div>
+  </div>
+</div>
+
+<!-- SERVICES -->
+<section id="tjenester">
+  <div class="container">
+    <div class="services-layout">
+      <div class="services-intro">
+        <p class="section-overline fade-in">Prisliste</p>
+        <h2 class="section-heading fade-in">Tjenestene<br>våre</h2>
+        <p class="fade-in d1">Alt fra raske hverdagsklipp til grundige behandlinger – alltid til ærlige priser. Klikk på en tjeneste for å booke.</p>
+      </div>
+      <div>
+        <div class="service-row fade-in" onclick="quickBook('herreklipp')"><div><p class="service-num">01</p><p class="service-name">Herreklipp</p><p class="service-desc">Klassisk saks- eller maskinpussing</p></div><p class="service-duration">30 min</p><p class="service-price">fra 250 kr</p></div>
+        <div class="service-row fade-in d1" onclick="quickBook('barneklipp')"><div><p class="service-num">02</p><p class="service-name">Barneklipp</p><p class="service-desc">For barn under 12 år</p></div><p class="service-duration">20 min</p><p class="service-price">fra 190 kr</p></div>
+        <div class="service-row fade-in d2" onclick="quickBook('dameklipp')"><div><p class="service-num">03</p><p class="service-name">Dameklipp</p><p class="service-desc">Vask, klipp og føning</p></div><p class="service-duration">60 min</p><p class="service-price">fra 399 kr</p></div>
+        <div class="service-row fade-in" onclick="quickBook('fade')"><div><p class="service-num">04</p><p class="service-name">Fade / Undercut</p><p class="service-desc">Presis gradert klipping</p></div><p class="service-duration">45 min</p><p class="service-price">fra 299 kr</p></div>
+        <div class="service-row fade-in d1" onclick="quickBook('skjegg')"><div><p class="service-num">05</p><p class="service-name">Skjeggstell</p><p class="service-desc">Form og trim av skjegg</p></div><p class="service-duration">20 min</p><p class="service-price">fra 149 kr</p></div>
+        <div class="service-row fade-in d2" onclick="quickBook('klipp_skjegg')"><div><p class="service-num">06</p><p class="service-name">Klipp + Skjegg</p><p class="service-desc">Komplett pakke</p></div><p class="service-duration">60 min</p><p class="service-price">fra 399 kr</p></div>
+        <div class="service-row fade-in" onclick="quickBook('farging')"><div><p class="service-num">07</p><p class="service-name">Farging</p><p class="service-desc">Farge og stell av hår</p></div><p class="service-duration">90 min</p><p class="service-price">fra 599 kr</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BOOKING -->
+<section class="booking" id="bestill">
+  <div class="container">
+    <div class="booking-layout">
+      <div class="booking-info">
+        <p class="section-overline fade-in">Online booking</p>
+        <h2 class="section-heading fade-in">Bestill<br><em>din time</em></h2>
+        <p class="fade-in d1">Book direkte her – ingen betaling nå, bare møt opp og betal i salongen.</p>
+        <ul class="fade-in d2">
+          <li>Velg tjeneste og ønsket tid</li>
+          <li>Vi bekrefter timen din snarest</li>
+          <li>Avbestilling? Ring oss bare</li>
+          <li>Åpent man–fre 10–18, lør 10–16</li>
+        </ul>
+      </div>
+
+      <div class="fade-in d1">
+        <!-- Success -->
+        <div class="booking-success" id="booking-success">
+          <div class="success-icon">✅</div>
+          <h3>Time mottatt!</h3>
+          <p>Vi har registrert din forespørsel og bekrefter snarest. Sjekk telefonen!</p>
+          <div class="success-details" id="success-details"></div>
+          <p>Spørsmål? Ring <a href="tel:+4740004061" style="color:var(--accent)">+47 400 04 061</a></p>
+        </div>
+
+        <!-- Step indicators -->
+        <div class="booking-steps" id="booking-steps">
+          <div class="step-ind active" id="si-1">1 · Tjeneste</div>
+          <div class="step-ind" id="si-2">2 · Dato</div>
+          <div class="step-ind" id="si-3">3 · Tid</div>
+          <div class="step-ind" id="si-4">4 · Detaljer</div>
+        </div>
+
+        <!-- Panel 1: Service -->
+        <div class="booking-panel active" id="panel-1">
+          <div id="service-options">
+            <div class="service-option" data-id="herreklipp" data-name="Herreklipp" data-duration="30" data-price="fra 250 kr" onclick="selectService(this)"><div><p class="service-option-name">Herreklipp</p><p class="service-option-sub">30 min</p></div><p class="service-option-price">fra 250 kr</p></div>
+            <div class="service-option" data-id="barneklipp" data-name="Barneklipp" data-duration="20" data-price="fra 190 kr" onclick="selectService(this)"><div><p class="service-option-name">Barneklipp</p><p class="service-option-sub">20 min</p></div><p class="service-option-price">fra 190 kr</p></div>
+            <div class="service-option" data-id="dameklipp" data-name="Dameklipp" data-duration="60" data-price="fra 399 kr" onclick="selectService(this)"><div><p class="service-option-name">Dameklipp</p><p class="service-option-sub">60 min</p></div><p class="service-option-price">fra 399 kr</p></div>
+            <div class="service-option" data-id="fade" data-name="Fade / Undercut" data-duration="45" data-price="fra 299 kr" onclick="selectService(this)"><div><p class="service-option-name">Fade / Undercut</p><p class="service-option-sub">45 min</p></div><p class="service-option-price">fra 299 kr</p></div>
+            <div class="service-option" data-id="skjegg" data-name="Skjeggstell" data-duration="20" data-price="fra 149 kr" onclick="selectService(this)"><div><p class="service-option-name">Skjeggstell</p><p class="service-option-sub">20 min</p></div><p class="service-option-price">fra 149 kr</p></div>
+            <div class="service-option" data-id="klipp_skjegg" data-name="Klipp + Skjegg" data-duration="60" data-price="fra 399 kr" onclick="selectService(this)"><div><p class="service-option-name">Klipp + Skjegg</p><p class="service-option-sub">60 min</p></div><p class="service-option-price">fra 399 kr</p></div>
+            <div class="service-option" data-id="farging" data-name="Farging" data-duration="90" data-price="fra 599 kr" onclick="selectService(this)"><div><p class="service-option-name">Farging</p><p class="service-option-sub">90 min</p></div><p class="service-option-price">fra 599 kr</p></div>
+          </div>
+          <div class="booking-nav"><button class="btn-next" id="btn1" onclick="goStep(2)" disabled>Velg dato →</button></div>
+        </div>
+
+        <!-- Panel 2: Date -->
+        <div class="booking-panel" id="panel-2">
+          <p style="font-size:0.83rem;color:var(--muted);margin-bottom:1rem;">Åpent mandag–fredag 10–18, lørdag 10–16. Stengt søndag.</p>
+          <input type="date" id="date-input" onchange="onDate(this.value)" />
+          <p class="date-hint" id="date-hint"></p>
+          <div class="booking-nav">
+            <button class="btn-back" onclick="goStep(1)">← Tilbake</button>
+            <button class="btn-next" id="btn2" onclick="goStep(3)" disabled>Velg tid →</button>
+          </div>
+        </div>
+
+        <!-- Panel 3: Time -->
+        <div class="booking-panel" id="panel-3">
+          <p style="font-size:0.83rem;color:var(--muted);" id="time-label">Velg en ledig tid:</p>
+          <div class="timeslots-grid" id="timeslots"></div>
+          <p style="font-size:0.75rem;color:var(--muted);margin-top:0.8rem;">Strekede tider er allerede tatt.</p>
+          <div class="booking-nav">
+            <button class="btn-back" onclick="goStep(2)">← Tilbake</button>
+            <button class="btn-next" id="btn3" onclick="goStep(4)" disabled>Fyll inn detaljer →</button>
+          </div>
+        </div>
+
+        <!-- Panel 4: Details -->
+        <div class="booking-panel" id="panel-4">
+          <div class="booking-summary" id="summary"></div>
+          <div class="form-group"><label>Navn *</label><input type="text" id="f-name" placeholder="Ditt fulle navn" /></div>
+          <div class="form-group"><label>Telefon *</label><input type="tel" id="f-phone" placeholder="+47 000 00 000" /></div>
+          <div class="form-group"><label>E-post (valgfritt)</label><input type="email" id="f-email" placeholder="din@epost.no" /></div>
+          <div class="form-group"><label>Kommentar (valgfritt)</label><textarea id="f-notes" rows="2" placeholder="Spesielle ønsker, allergier..."></textarea></div>
+          <div class="booking-error" id="book-err"></div>
+          <div class="booking-nav">
+            <button class="btn-back" onclick="goStep(3)">← Tilbake</button>
+            <button class="btn-next" id="btn-submit" onclick="submitBooking()">Send bestilling ✓</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="om-oss">
+  <div class="container">
+    <div class="about-inner">
+      <div class="about-text">
+        <p class="section-overline fade-in">Om oss</p>
+        <h2 class="section-heading fade-in">Fagfolk med<br><em>hjertet</em> i Bodø</h2>
+        <p class="fade-in d1" style="margin-top:2rem;">Klipp Frisør er en av Bodøs mest betrodde salonger – vi betjener kunder fra hele regionen, fra studenter til barnefamilier.</p>
+        <p class="fade-in d1">Teamet vårt lytter alltid til hva du vil ha, og gir seg aldri til vi er fornøyd med resultatet.</p>
+        <p class="highlight fade-in d2">«Den beste barbereren innen 1000 kilometer i Norge.»</p>
+      </div>
+      <div class="about-visual-wrap">
+        <div class="about-big-num">★</div>
+        <div class="about-stats">
+          <div class="about-stat fade-in"><div class="about-stat-val">4.8</div><div class="about-stat-label">Google-rating</div></div>
+          <div class="about-stat fade-in d1"><div class="about-stat-val">187</div><div class="about-stat-label">Anmeldelser</div></div>
+          <div class="about-stat fade-in d2"><div class="about-stat-val">6 dg</div><div class="about-stat-label">Åpent i uken</div></div>
+          <div class="about-stat fade-in d3"><div class="about-stat-val">100%</div><div class="about-stat-label">Fornøyde kunder</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- REVIEWS -->
+<section class="reviews" id="anmeldelser">
+  <div class="container">
+    <div class="reviews-header">
+      <div><p class="section-overline fade-in">Anmeldelser</p><h2 class="section-heading fade-in">Hva kundene<br>sier om oss</h2></div>
+      <div class="fade-in"><div class="score-num">4.8</div><div class="score-stars">★★★★★</div><div class="score-sub">187 Google-anmeldelser</div></div>
+    </div>
+    <div class="reviews-grid">
+      <div class="review-item fade-in"><div class="review-item-stars">★ ★ ★ ★ ★</div><p class="review-item-text">"Beste frisør innen 1000 kilometer i Norge. Barber Salim er rett og slett best i klassen – aldri skuffet."</p><p class="review-item-author">— Google-anmeldelse</p></div>
+      <div class="review-item fade-in d1"><div class="review-item-stars">★ ★ ★ ★ ★</div><p class="review-item-text">"Det beste resultatet jeg noensinne har fått! Rask service, fantastisk kvalitet og svært rimelig pris."</p><p class="review-item-author">— Google-anmeldelse</p></div>
+      <div class="review-item fade-in d2"><div class="review-item-stars">★ ★ ★ ★ ★</div><p class="review-item-text">"Et profesjonelt og vennlig sted der barnet mitt føler seg trygg. De forstår håret hans og håndterer det riktig. 10 stjerner!"</p><p class="review-item-author">— Google-anmeldelse</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="kontakt">
+  <div class="container">
+    <div class="contact-inner">
+      <div>
+        <p class="section-overline fade-in">Kontakt</p>
+        <h2 class="section-heading fade-in">Finn oss<br>i Bodø</h2>
+        <div style="margin-top:3rem;">
+          <div class="contact-item fade-in"><div class="contact-icon">📍</div><div><p class="contact-label">Adresse</p><p class="contact-val">Sjøgata 48, 8006 Bodø</p></div></div>
+          <div class="contact-item fade-in d1"><div class="contact-icon">📞</div><div><p class="contact-label">Telefon</p><p class="contact-val"><a href="tel:+4740004061">+47 400 04 061</a></p></div></div>
+          <div class="contact-item fade-in d2"><div class="contact-icon">🕐</div><div><p class="contact-label">Åpningstider</p><div class="hours-grid"><div class="hours-row"><span>Mandag – Fredag</span><span>10:00 – 18:00</span></div><div class="hours-row"><span>Lørdag</span><span>10:00 – 16:00</span></div><div class="hours-row"><span>Søndag</span><span>Stengt</span></div></div></div></div>
+        </div>
+      </div>
+      <div class="map-box fade-in"><span>📍</span><p>Sjøgata 48, Bodø</p><p style="font-size:0.72rem;color:rgba(248,246,242,0.3)">Google Maps integreres her</p></div>
+    </div>
+  </div>
+</section>
+
+<footer><div class="container"><p>© 2025 Klipp Frisør · Sjøgata 48, 8006 Bodø · <a href="tel:+4740004061">+47 400 04 061</a></p></div></footer>
+
+<script>
+// ════════════════════════════════════════════
+// SUPABASE — BYTT UT MED DINE VERDIER
+// ════════════════════════════════════════════
+const SUPABASE_URL  = 'https://ztcmdasqdcnqvkigjeaj.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp0Y21kYXNxZGNucXZraWdqZWFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwMDA5MTksImV4cCI6MjA4OTU3NjkxOX0.cZi44v3E7mgGlFw_W0CZJWyIluX7CfQhIpnDZltLTi0';
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════
+const state = { service:'', serviceName:'', servicePrice:'', duration:30, date:'', time:'' };
+let takenTimes = [];
+
+// ════════════════════════════════════════════
+// STEP NAVIGATION
+// ════════════════════════════════════════════
+function goStep(n) {
+  [1,2,3,4].forEach(i => {
+    document.getElementById(`panel-${i}`).classList.toggle('active', i===n);
+    const ind = document.getElementById(`si-${i}`);
+    ind.classList.remove('active','done');
+    if (i < n) ind.classList.add('done');
+    if (i === n) ind.classList.add('active');
+  });
+  if (n===3) loadSlots();
+  if (n===4) buildSummary();
+  document.getElementById('bestill').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// ════════════════════════════════════════════
+// STEP 1 – SERVICE
+// ════════════════════════════════════════════
+function selectService(el) {
+  document.querySelectorAll('.service-option').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+  state.service     = el.dataset.id;
+  state.serviceName = el.dataset.name;
+  state.servicePrice = el.dataset.price;
+  state.duration    = parseInt(el.dataset.duration);
+  document.getElementById('btn1').disabled = false;
+}
+
+function quickBook(id) {
+  const el = document.querySelector(`.service-option[data-id="${id}"]`);
+  if (el) { selectService(el); goStep(1); document.getElementById('bestill').scrollIntoView({behavior:'smooth'}); }
+}
+
+// ════════════════════════════════════════════
+// STEP 2 – DATE
+// ════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('date-input').min = new Date().toISOString().split('T')[0];
+});
+
+function onDate(val) {
+  const day = new Date(val).getDay();
+  const hint = document.getElementById('date-hint');
+  const btn  = document.getElementById('btn2');
+  if (day===0) {
+    hint.textContent = '⚠ Vi er stengt på søndager – velg en annen dag.';
+    hint.style.color = '#f87171'; btn.disabled = true;
+  } else {
+    state.date = val; state.time = '';
+    hint.textContent = day===6 ? '✓ Lørdag – åpent 10:00–16:00' : '✓ Åpent 10:00–18:00';
+    hint.style.color = 'var(--success)'; btn.disabled = false;
+  }
+}
+
+// ════════════════════════════════════════════
+// STEP 3 – TIME SLOTS
+// ════════════════════════════════════════════
+async function loadSlots() {
+  const grid = document.getElementById('timeslots');
+  grid.innerHTML = '<div style="font-size:0.85rem;color:var(--muted);padding:1rem 0">Laster ledige tider...</div>';
+  document.getElementById('btn3').disabled = true;
+
+  try {
+    const { data } = await db.from('bookings').select('time').eq('date', state.date).neq('status','cancelled');
+    takenTimes = (data||[]).map(r=>r.time);
+  } catch { takenTimes = []; }
+
+  const isSat = new Date(state.date).getDay()===6;
+  const endH  = isSat ? 16 : 18;
+  const slots = [];
+  for (let h=10; h<endH; h++) { slots.push(`${h}:00`); slots.push(`${h}:30`); }
+
+  grid.innerHTML = '';
+  slots.forEach(t => {
+    const taken = takenTimes.includes(t);
+    const el = document.createElement('div');
+    el.className = 'timeslot' + (taken ? ' taken' : '');
+    el.textContent = t;
+    if (!taken) el.onclick = () => selectTime(el, t);
+    grid.appendChild(el);
+  });
+}
+
+function selectTime(el, t) {
+  document.querySelectorAll('.timeslot').forEach(s=>s.classList.remove('selected'));
+  el.classList.add('selected');
+  state.time = t;
+  document.getElementById('btn3').disabled = false;
+}
+
+// ════════════════════════════════════════════
+// STEP 4 – SUMMARY + SUBMIT
+// ════════════════════════════════════════════
+function buildSummary() {
+  const d = new Date(state.date);
+  const days = ['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag'];
+  const mo   = ['jan','feb','mar','apr','mai','jun','jul','aug','sep','okt','nov','des'];
+  document.getElementById('summary').innerHTML =
+    `<p><strong>${state.serviceName}</strong> — ${state.servicePrice}</p>
+     <p>${days[d.getDay()]} ${d.getDate()}. ${mo[d.getMonth()]} kl. ${state.time}</p>`;
+}
+
+async function submitBooking() {
+  const name  = document.getElementById('f-name').value.trim();
+  const phone = document.getElementById('f-phone').value.trim();
+  const email = document.getElementById('f-email').value.trim();
+  const notes = document.getElementById('f-notes').value.trim();
+  const err   = document.getElementById('book-err');
+
+  if (!name || !phone) {
+    err.textContent = 'Fyll inn navn og telefonnummer for å fortsette.';
+    err.classList.add('visible'); return;
+  }
+  err.classList.remove('visible');
+
+  const btn = document.getElementById('btn-submit');
+  btn.disabled = true; btn.textContent = 'Sender...';
+
+  const { error } = await db.from('bookings').insert({
+    name, phone, email: email||null, notes: notes||null,
+    service: state.serviceName, date: state.date, time: state.time, status: 'pending'
+  });
+
+  if (error) {
+    err.textContent = 'Noe gikk galt – prøv igjen eller ring oss.';
+    err.classList.add('visible');
+    btn.disabled = false; btn.textContent = 'Send bestilling ✓'; return;
+  }
+
+  // Show success screen
+  document.getElementById('booking-steps').style.display = 'none';
+  document.querySelectorAll('.booking-panel').forEach(p=>p.style.display='none');
+  const d  = new Date(state.date);
+  const mo = ['jan','feb','mar','apr','mai','jun','jul','aug','sep','okt','nov','des'];
+  document.getElementById('success-details').innerHTML =
+    `<p><strong>${name}</strong></p>
+     <p>📋 ${state.serviceName} — ${state.servicePrice}</p>
+     <p>📅 ${d.getDate()}. ${mo[d.getMonth()]} kl. ${state.time}</p>
+     <p>📞 ${phone}</p>`;
+  document.getElementById('booking-success').classList.add('visible');
+}
+
+// ════════════════════════════════════════════
+// SCROLL & REVEAL
+// ════════════════════════════════════════════
+window.addEventListener('scroll', () => {
+  document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 60);
+});
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+document.querySelectorAll('.fade-in').forEach(el => obs.observe(el));
+</script>
+</body>
+</html>
